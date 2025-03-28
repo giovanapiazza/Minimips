@@ -3,10 +3,6 @@
 #include <stdint.h>
 #include "minimips.h"
 
-//variaveis globais
-char memoria_instrucao[TAM_MEMORIA][TAM_INSTRUCAO]; // Memória de instruções
-int memoria_dados[TAM_MEMORIA_DADOS]; // Memória de dados
-
 
 int menu() {
     int m;
