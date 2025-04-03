@@ -26,19 +26,19 @@ int main(){
         switch (op){
             case 1:
                 printf("Informe o número do registrador (0 - 7): ");
-            scanf("%d", &numreg);
-            printf("Digite  valor do registrador: ");
-            scanf("%d", &valor);
-            addValor(&reg, numreg, valor);
-            break;
+                scanf("%d", &numreg);
+                printf("Digite  valor do registrador: ");
+                scanf("%d", &valor);
+                addValor(&reg, numreg, valor);
+                break;
             case 2:
                 printf("Digite o número do registrador (0 - 7): ");
-            scanf("%d", &numreg);
-            valor = mostrarValor(&reg, numreg);
-            if (valor != -1){
-                printf("Valor no registrador %d: %d\n", numreg, valor);
-            }
-            break;
+                scanf("%d", &numreg);
+                valor = mostrarValor(&reg, numreg);
+                if (valor != -1){
+                    printf("Valor no registrador %d: %d\n", numreg, valor);
+                }
+                break;
             case 3:
                 printf("Lista de registradores com seus valores:\n");
                 printarRegistradores(&reg);
