@@ -1,11 +1,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "minimips.h"
+#include <stdio.h>
 
 
 
 char mem_p[256][17];
+char mem_d[256][9];
 int pc = 0;
 
 void carregarMemoria() {
@@ -19,21 +20,9 @@ void carregarMemoria() {
         return;
     }
 
-void carregarMemoriaDados() {
-    char arquivo[50];
-    printf("Digite o nome do arquivo que deseja abrir: ");
-    scanf("%s", arquivo);
-
-    FILE *f = fopen(arquivo, "r");
-    if (f == NULL) {
-        printf("Erro ao abrir o arquivo\n");
-        return;
-    }
-
     int i = 0;
     char linha[17];
     while (fgets(linha, 16 + 1, f)) { 
-        if((strcmp(linha, "\n")) == 1){
             char *pos; // Ponteiro para a posição do caractere de nova linha
             if ((pos = strchr(linha, '\n')) != NULL) {
                 *pos = '\0'; 
@@ -41,10 +30,54 @@ void carregarMemoriaDados() {
             strncpy(mem_p[i], linha, 16); // Copia a linha para a memória de programa
             printf("mem_p[%d]: %s\n", i, mem_p[i]);
             i++;
-        }
     }
     fclose(f);
     printf("Memoria de programa carregada com sucesso\n");
+}
+
+void carregarMemoriaDados(){
+    char arquivo[50];
+    printf("Digite o nome do arquivo que deseja abrir: ");
+    scanf("%s", arquivo);
+
+    FILE *f = fopen(arquivo, "r");
+    if (f == NULL){
+        fprintf(stderr, "Erro ao abrir o arquivo %s\n", arquivo);
+        return;
+    }
+    int i = 0;
+    char linha[9];
+    while (fgets(linha, 9, f)) { 
+            char *pos; // Ponteiro para a posição do caractere de nova linha
+            if ((pos = strchr(linha, '\n')) != NULL) {
+                *pos = '\0'; 
+            }
+            strncpy(mem_d[i], linha, 9); // Copia a linha para a memória de programa
+            printf("mem_d[%d]: %s\n", i, mem_d[i]);
+            i++;
+    }
+    fclose(f);
+    printf("Código carregado com sucesso na memória de dados!\n");
+}
+
+void ImprimirMemoria(){
+
+    printf("teste\n");
+
+        for(int i=0;i<10;i++){
+
+        printf("%d: %s\n", i, mem_p[i]);
+    }
+
+}
+
+void ImprimirMemoriaDados(){
+
+        for(int i=0;i<6;i++){
+
+        printf("%d: %s\n", i, mem_d[i]);
+    }
+
 }
 
 
@@ -121,10 +154,13 @@ int check_overflow(int result) {
         return 1;
     }
     return 0;
+}
 
 int main(){
+    int c= 0;
+
+    while(c == 0){
     
-    int menu() {
     int m;
     printf("\t MINI-MIPS 8 BITS - UNIPAMPA\n"); 
     printf("1. Carregar memoria\n"); 
@@ -142,18 +178,27 @@ int main(){
     printf("Escolha uma opção: "); 
     setbuf(stdin, NULL);
     scanf("%d", &m);
+    switch(m){
+        case 1: 
+            carregarMemoria();
+            break;
 
-    return m;
+        case 2: 
+            carregarMemoriaDados();
+            break;
+            
+        case 3:
+            ImprimirMemoria();
+            break;
+
+        case 4:
+            ImprimirMemoriaDados();
+            break;
+
+
+
+    }
 }
 
-    carregarMemoria();
-    for(int i=0;i<6;i++){
-
-        printf("%d: %s\n", pc, mem_p[pc]);
-        pc++;
-    }
-    pc = 0;
-    decod(mem_p[pc]);
     return 0;
-
 }
