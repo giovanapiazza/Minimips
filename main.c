@@ -3,11 +3,22 @@
 #include <stdint.h>
 #include <stdio.h>
 
-
+typedef struct {
+    int reg[8];
+} BancoRegistradores;
 
 char mem_p[256][17];
 char mem_d[256][9];
 int pc = 0;
+
+void unidadedeSaida(BancoRegistradores *BR){
+    int i;
+    const char *nomes[] = {"$zero", "$v0", "$a0", "$t0", "$t1", "$s0", "$s1", "$ra"};
+
+    for (i=0; i<8; i++){
+        printf("Registrador %s: %d\n", nomes[i], (*BR).reg[i]);
+    }
+}
 
 void carregarMemoria() {
     char arquivo[50];
@@ -23,6 +34,8 @@ void carregarMemoria() {
     int i = 0;
     char linha[17];
     while (fgets(linha, 16 + 1, f)) { 
+                if(linha[0] == '\n') continue;
+
             char *pos; // Ponteiro para a posição do caractere de nova linha
             if ((pos = strchr(linha, '\n')) != NULL) {
                 *pos = '\0'; 
@@ -48,13 +61,16 @@ void carregarMemoriaDados(){
     int i = 0;
     char linha[9];
     while (fgets(linha, 9, f)) { 
-            char *pos; // Ponteiro para a posição do caractere de nova linha
-            if ((pos = strchr(linha, '\n')) != NULL) {
-                *pos = '\0'; 
-            }
-            strncpy(mem_d[i], linha, 9); // Copia a linha para a memória de programa
-            printf("mem_d[%d]: %s\n", i, mem_d[i]);
-            i++;
+        if(linha[0] == '\n') continue;
+
+        char *pos; // Ponteiro para a posição do caractere de nova linha
+        if ((pos = strchr(linha, '\n')) != NULL) {
+            *pos = '\0'; 
+        }
+        strncpy(mem_d[i], linha, 9); // Copia a linha para a memória de programa
+        printf("mem_d[%d]: %s\n", i, mem_d[i]);
+        i++;
+        
     }
     fclose(f);
     printf("Código carregado com sucesso na memória de dados!\n");
@@ -159,6 +175,9 @@ int check_overflow(int result) {
 int main(){
     int c= 0;
 
+    BancoRegistradores BR = {0};
+
+
     while(c == 0){
     
     int m;
@@ -181,6 +200,7 @@ int main(){
     switch(m){
         case 1: 
             carregarMemoria();
+            decod(mem_p[0]);
             break;
 
         case 2: 
@@ -194,6 +214,11 @@ int main(){
         case 4:
             ImprimirMemoriaDados();
             break;
+
+        case 5:
+            unidadedeSaida(&BR);
+            break;
+
 
 
 
