@@ -172,6 +172,41 @@ int check_overflow(int result) {
     return 0;
 }
 
+
+// falta os conversores, mas vamos com calma né mores 
+
+
+void salvar_asm() {
+    FILE *arquivo_asm = fopen("programa.asm", "w");
+    if (arquivo_asm == NULL) {
+        printf("Erro ao criar o arquivo\n");
+        return;
+    }
+
+    for (int i = 0; i < TAM_MEMORIA; i++) {
+        if (strlen(mem_p[i]) > 0) {
+            converter_asm(mem_p[i], arquivo_asm, codificarInstrucao(mem_p[i]));
+            fprintf(arquivo_asm, "\n");
+        }
+    }
+    fclose(arquivo_asm);
+    printf("Arquivo .asm salvo com sucesso!\n");
+}
+
+void salvar_data() {
+    FILE *arquivo_memoria = fopen("programa.data", "w");
+    if (arquivo_memoria == NULL) {
+        printf("Erro ao criar o arquivo\n");
+        return;
+    }
+
+    for (int i = 0; i < TAM_MEMORIA_DADOS; i++) {
+        fprintf(arquivo_memoria, "Endereço de memoria[%d]: %s\n", i, mem_d[i]);
+    }
+    fclose(arquivo_memoria);
+    printf("Arquivo .data salvo com sucesso!\n");
+}
+
 int main(){
     int c= 0;
 
@@ -198,29 +233,57 @@ int main(){
     setbuf(stdin, NULL);
     scanf("%d", &m);
     switch(m){
-        case 1: 
+        case 1: //Carregar memória de instruções (.mem) 
             carregarMemoria();
             decod(mem_p[0]);
             break;
 
-        case 2: 
+        case 2:  //Carregar memória de Dados (.dat) 
             carregarMemoriaDados();
             break;
             
-        case 3:
+        case 3: //Imprimir memórias instruções
             ImprimirMemoria();
             break;
 
-        case 4:
+        case 4: //Imprimir memórias dados 
             ImprimirMemoriaDados();
             break;
 
-        case 5:
+        case 5: //  Imprimir banco de registradores
             unidadedeSaida(&BR);
             break;
+        
+        case 6:// Imprimir todo o simulador (registradores e memórias)
+            
+            break;
+        
+        case 7:  // salvar asm
+            salvar_asm();
+            break;
 
+        case 8: //salvar dat
+            salvar_data();
+            break;
 
+        case 9: //executar oprograma
+           
+            break;
+        
+        case 10: // executar 1 instrução
+          
+            break;
 
+        case 11: // voltar uma inst
+
+            break;
+
+        case 0:// sair
+            printf("Programa finalizado!");
+            break;
+        default:
+            printf("Opção invalida, por favor digite novamente."\n);
+           
 
     }
 }
