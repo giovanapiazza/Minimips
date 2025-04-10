@@ -77,20 +77,15 @@ void carregarMemoriaDados(){
 }
 
 void ImprimirMemoria(){
-
     printf("teste\n");
-
         for(int i=0;i<10;i++){
-
         printf("%d: %s\n", i, mem_p[i]);
     }
 
 }
 
 void ImprimirMemoriaDados(){
-
         for(int i=0;i<6;i++){
-
         printf("%d: %s\n", i, mem_d[i]);
     }
 
@@ -174,7 +169,7 @@ int check_overflow(int result) {
 
 
 // falta os conversores, mas vamos com calma né mores 
-
+//void converte_asm(char* inst, FILE *arquivo_asm) {
 
 void salvar_asm() {
     FILE *arquivo_asm = fopen("programa.asm", "w");
@@ -185,7 +180,7 @@ void salvar_asm() {
 
     for (int i = 0; i < TAM_MEMORIA; i++) {
         if (strlen(mem_p[i]) > 0) {
-            converter_asm(mem_p[i], arquivo_asm, codificarInstrucao(mem_p[i]));
+            decod(mem_p[i], arquivo_asm, codificarInstrucao(mem_p[i]));
             fprintf(arquivo_asm, "\n");
         }
     }
@@ -282,7 +277,7 @@ int main(){
             printf("Programa finalizado!");
             break;
         default:
-            printf("Opção invalida, por favor digite novamente."\n);
+            printf("Opção invalida, por favor digite novamente.\n");
            
 
     }
