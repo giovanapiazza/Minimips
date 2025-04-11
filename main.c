@@ -22,6 +22,31 @@ char mem_p[256][17];
 char mem_d[256][9];
 int pc = 0;
 
+typedef struct {
+    int pc;
+    BancoRegistradores *BR;
+} estado;
+
+Estado antes[256];
+int topo = -1; // posição do último estado salvo
+
+void salvar_estado(int pc_atual, BancoRegistradores BR_atual) {
+    topo++;
+    antes[topo].pc = pc_atual;
+    antes[topo].BR = BR_atual;
+}
+
+int restaurar_estado(int *pc, BancoRegistradores *BR) {
+    if (topo < 0) {
+        printf("Não há instrução anterior para voltar.\n");
+        return 0;
+    }
+    *pc = antes[topo].pc;
+    *BR = antes[topo].BR;
+    topo--;
+    return 1;
+}
+
 void unidadedeSaida(BancoRegistradores *BR){
     int i;
     const char *nomes[] = {"$zero", "$v0", "$a0", "$t0", "$t1", "$s0", "$s1", "$ra"};
@@ -102,60 +127,52 @@ void ImprimirMemoriaDados(){
 
 }
 
+Instrucao decod(char* inst) {
+    Instrucao i;
+    char buffer[17];
 
-void decod(char* inst){
+    strncpy(buffer, inst, 4);
+    buffer[4] = '\0';
+    i.opcode = strtol(buffer, NULL, 2);
 
-    char opcode[5];
-    char rs[4];
-    char rt[4];
-    char rd[4];
-    char funct[4];
-    char imed[7];
-    char addr[13];
+    if (i.opcode == 0) {
+        i.tipo = 1;
+        strncpy(buffer, inst + 4, 3); buffer[3] = '\0';
+        i.rs = strtol(buffer, NULL, 2);
 
-    strncpy(opcode, inst, 4);
-    opcode[4] = '\0';
+        strncpy(buffer, inst + 7, 3); buffer[3] = '\0';
+        i.rt = strtol(buffer, NULL, 2);
 
-    // TIPO R
-    if((strcmp("0000\0", opcode) == 0)){
-        printf("tipo r");
-        strncpy(rs, inst+4, 3);
-        rs[3] = '\0';
-        strncpy(rt, inst+7, 3);
-        rt[3] = '\0';
-        strncpy(rd, inst+10, 3);
-        rd[3] = '\0';
-        strncpy(funct, inst+13, 3);
-        rd[3] = '\0';
+        strncpy(buffer, inst + 10, 3); buffer[3] = '\0';
+        i.rd = strtol(buffer, NULL, 2);
+
+        strncpy(buffer, inst + 13, 3); buffer[3] = '\0';
+        i.funct = strtol(buffer, NULL, 2);
+    } else if (i.opcode == 2) {
+        i.tipo = 3;
+        strncpy(buffer, inst + 4, 12); buffer[12] = '\0';
+        i.address = strtol(buffer, NULL, 2);
+    } else {
+        i.tipo = 2;
+        strncpy(buffer, inst + 4, 3); buffer[3] = '\0';
+        i.rs = strtol(buffer, NULL, 2);
+
+        strncpy(buffer, inst + 7, 3); buffer[3] = '\0';
+        i.rt = strtol(buffer, NULL, 2);
+
+        strncpy(buffer, inst + 10, 6); buffer[6] = '\0';
+        int imm = strtol(buffer, NULL, 2);
+        if (inst[10] == '1') imm -= 64;
+        i.immediate = imm;
     }
-    // TIPO J
-    else if((strcmp("0010\0", opcode) == 0)){
-        printf("tipo j");
-        strncpy(addr, inst+4, 12);
-        addr[13] = '\0';
-    }
-    // TIPO I
-    else{
-        printf("tipo i");
-        strncpy(rs, inst+4, 3);
-        rs[3] = '\0';
-        strncpy(rt, inst+7, 3);
-        rt[3] = '\0';
-        strncpy(imed, inst+10, 6);
-        imed[6] = '\0';
-    }
-    
-    printf("INSTRUCAO: %s\n", inst);
-    printf("OPCODE: %s\n", opcode);
-    printf("RS: %s\n", rs);
-    printf("RT: %s\n", rt);
-    printf("RD: %s\n", rd);
-    printf("FUNCT: %s\n", funct);
-    printf("IMED: %s\n", imed);
-    printf("ADDR: %s\n", addr);
 
-    pc++;
+    return i;
 }
+void imprimir_instrucao(Instrucao i) {
+    printf("Tipo: %d | Opcode: %d | RS: %d | RT: %d | RD: %d | Funct: %d | Immediate: %d | Address: %d\n",
+        i.tipo, i.opcode, i.rs, i.rt, i.rd, i.funct, i.immediate, i.address);
+}
+
 
 int ula(int a, int b, int op) { 
     switch (op) { 
@@ -177,11 +194,6 @@ int check_overflow(int result) {
     }
     return 0;
 }
-
-
-// falta os conversores, mas vamos com calma né mores 
-//void converte_asm(char* inst, FILE *arquivo_asm) {
-//Instrucao inst
 
 void salvar_asm() {
     FILE *arquivo_asm = fopen("programa.asm", "w");
@@ -217,9 +229,11 @@ void salvar_data() {
 
 // executar so 1
 void executar_instrucao(char* bin_instr, BancoRegistradores *BR) {
+    salvar_estado(pc, *BR);
     Instrucao inst = decod(bin_instr);
     
     switch(inst.tipo) {
+        int pulou = 0;
         case 1: // R
             if (inst.funct == 0) { // and
                 BR->reg[inst.rd] = BR->reg[inst.rs] & BR->reg[inst.rt];
@@ -248,10 +262,10 @@ void executar_instrucao(char* bin_instr, BancoRegistradores *BR) {
             pc = inst.address - 1; // -1 pq o pc++ vem depois
             break;
     }
-
-    pc++;
+    if (!pulou) pc++
 }
 
+// voltar uma
 
 int main(){
     int c= 0;
@@ -332,7 +346,9 @@ int main(){
             break;
 
         case 11: // voltar uma inst
-
+            if (restaurar_estado(&pc, &BR)) {
+            printf("Instrução anterior restaurada. PC = %d\n", pc);
+    }
             break;
 
         case 0:// sair
