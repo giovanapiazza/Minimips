@@ -7,6 +7,17 @@ typedef struct {
     int reg[8];
 } BancoRegistradores;
 
+typedef struct {
+    int tipo;         // 1 = R, 2 = I, 3 = J
+    int opcode;
+    int rs;
+    int rt;
+    int rd;
+    int funct;
+    int immediate;
+    int address;
+} Instrucao;
+
 char mem_p[256][17];
 char mem_d[256][9];
 int pc = 0;
@@ -170,6 +181,7 @@ int check_overflow(int result) {
 
 // falta os conversores, mas vamos com calma né mores 
 //void converte_asm(char* inst, FILE *arquivo_asm) {
+//Instrucao inst
 
 void salvar_asm() {
     FILE *arquivo_asm = fopen("programa.asm", "w");
@@ -177,13 +189,13 @@ void salvar_asm() {
         printf("Erro ao criar o arquivo\n");
         return;
     }
-
-    for (int i = 0; i < TAM_MEMORIA; i++) {
+    for (int i = 0; i < 256; i++) {
         if (strlen(mem_p[i]) > 0) {
-            decod(mem_p[i], arquivo_asm, codificarInstrucao(mem_p[i]));
-            fprintf(arquivo_asm, "\n");
+            Instrucao instr = decod(mem_p[i]);
+            fprintf(arquivo_asm, "INSTRUÇÃO %d: tipo %c, opcode %d\n", i, instr.tipo, instr.opcode);
         }
     }
+
     fclose(arquivo_asm);
     printf("Arquivo .asm salvo com sucesso!\n");
 }
@@ -195,16 +207,18 @@ void salvar_data() {
         return;
     }
 
-    for (int i = 0; i < TAM_MEMORIA_DADOS; i++) {
+    for (int i = 0; i < 256; i++) {
         fprintf(arquivo_memoria, "Endereço de memoria[%d]: %s\n", i, mem_d[i]);
     }
+
     fclose(arquivo_memoria);
     printf("Arquivo .data salvo com sucesso!\n");
 }
 
 // executar so 1
-void executar_instrucao(char* inst, BancoRegistradores *BR) {
+void executar_instrucao(char* bin_instr, BancoRegistradores *BR) {
     Instrucao inst = decod(bin_instr);
+    
     switch(inst.tipo) {
         case 1: // R
             if (inst.funct == 0) { // and
@@ -218,7 +232,7 @@ void executar_instrucao(char* inst, BancoRegistradores *BR) {
             }
             break;
         
-        case 2:// J
+        case 2: // I
             if (inst.opcode == 4) { // beq
                 if (BR->reg[inst.rs] == BR->reg[inst.rt])
                     pc += inst.immediate;
@@ -237,6 +251,7 @@ void executar_instrucao(char* inst, BancoRegistradores *BR) {
 
     pc++;
 }
+
 
 int main(){
     int c= 0;
@@ -282,11 +297,14 @@ int main(){
             break;
 
         case 5: //  Imprimir banco de registradores
-            (&BR);
+            unidadedeSaida(*BR);
             break;
         
         case 6:// Imprimir todo o simulador (registradores e memórias)
-            
+            ImprimirMemoria();
+            ImprimirMemoriaDados();
+            unidadedeSaida(*BR);
+
             break;
         
         case 7:  // salvar asm
@@ -298,7 +316,11 @@ int main(){
             break;
 
         case 9: //executar oprograma
-           
+           while (strlen(mem_p[pc]) > 0) {
+           printf("\nExecutando instrução no PC = %d: %s\n", pc, mem_p[pc]);
+           executar_instrucao(mem_p[pc], &BR);
+    }
+    printf("Fim do programa.\n");
             break;
         
         case 10: // executar 1 instrução
@@ -306,8 +328,7 @@ int main(){
             executar_instrucao(mem_p[pc], &BR);
             } else {
             printf("Nenhuma instrução para executar.\n");
-            }
-                   
+            }      
             break;
 
         case 11: // voltar uma inst
