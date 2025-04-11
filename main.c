@@ -202,6 +202,42 @@ void salvar_data() {
     printf("Arquivo .data salvo com sucesso!\n");
 }
 
+// executar so 1
+void executar_instrucao(char* inst, BancoRegistradores *BR) {
+    Instrucao inst = decod(bin_instr);
+    switch(inst.tipo) {
+        case 1: // R
+            if (inst.funct == 0) { // and
+                BR->reg[inst.rd] = BR->reg[inst.rs] & BR->reg[inst.rt];
+            } else if (inst.funct == 1) { // or
+                BR->reg[inst.rd] = BR->reg[inst.rs] | BR->reg[inst.rt];
+            } else if (inst.funct == 2) { // add
+                BR->reg[inst.rd] = BR->reg[inst.rs] + BR->reg[inst.rt];
+            } else if (inst.funct == 3) { // sub
+                BR->reg[inst.rd] = BR->reg[inst.rs] - BR->reg[inst.rt];
+            }
+            break;
+        
+        case 2:// J
+            if (inst.opcode == 4) { // beq
+                if (BR->reg[inst.rs] == BR->reg[inst.rt])
+                    pc += inst.immediate;
+            } else if (inst.opcode == 5) { // lw
+                BR->reg[inst.rt] = strtol(mem_d[BR->reg[inst.rs] + inst.immediate], NULL, 2);
+            } else if (inst.opcode == 6) { // sw
+                int val = BR->reg[inst.rt];
+                sprintf(mem_d[BR->reg[inst.rs] + inst.immediate], "%08d", val);
+            }
+            break;
+
+        case 3: // J
+            pc = inst.address - 1; // -1 pq o pc++ vem depois
+            break;
+    }
+
+    pc++;
+}
+
 int main(){
     int c= 0;
 
@@ -246,7 +282,7 @@ int main(){
             break;
 
         case 5: //  Imprimir banco de registradores
-            unidadedeSaida(&BR);
+            (&BR);
             break;
         
         case 6:// Imprimir todo o simulador (registradores e memórias)
@@ -266,7 +302,12 @@ int main(){
             break;
         
         case 10: // executar 1 instrução
-          
+            if (strlen(mem_p[pc]) > 0) {
+            executar_instrucao(mem_p[pc], &BR);
+            } else {
+            printf("Nenhuma instrução para executar.\n");
+            }
+                   
             break;
 
         case 11: // voltar uma inst
