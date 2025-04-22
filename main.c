@@ -25,29 +25,30 @@ int pc = 0;
 typedef struct {
     int pc;
     BancoRegistradores *BR;
-} estado;
+} Estado;
 
 Estado antes[256];
-int topo = -1; // posição do último estado salvo
+int topo = -1; // posicao do último estado salvo
 
 void salvar_estado(int pc_atual, BancoRegistradores BR_atual) {
     topo++;
-    antes[topo].pc = pc_atual;
-    antes[topo].BR = BR_atual;
+    // antes[topo].pc = pc_atual;
+    // antes[topo].BR = BR_atual;
 }
 
 int restaurar_estado(int *pc, BancoRegistradores *BR) {
     if (topo < 0) {
-        printf("Não há instrução anterior para voltar.\n");
+        printf("Nao há instrucao anterior para voltar.\n");
         return 0;
     }
-    *pc = antes[topo].pc;
-    *BR = antes[topo].BR;
+    // *pc = antes[topo].pc;
+    // *BR = antes[topo].BR;
     topo--;
     return 1;
 }
 
 void unidadedeSaida(BancoRegistradores *BR){
+    printf("testes");
     int i;
     const char *nomes[] = {"$zero", "$v0", "$a0", "$t0", "$t1", "$s0", "$s1", "$ra"};
 
@@ -56,7 +57,7 @@ void unidadedeSaida(BancoRegistradores *BR){
     }
 }
 
-void carregarMemoria() {
+void restaurar_estado() {
     char arquivo[50];
     printf("Digite o nome do arquivo que deseja abrir: ");
     scanf("%s", arquivo);
@@ -72,7 +73,7 @@ void carregarMemoria() {
     while (fgets(linha, 16 + 1, f)) { 
                 if(linha[0] == '\n') continue;
 
-            char *pos; // Ponteiro para a posição do caractere de nova linha
+            char *pos; // Ponteiro para a posicao do caractere de nova linha
             if ((pos = strchr(linha, '\n')) != NULL) {
                 *pos = '\0'; 
             }
@@ -99,7 +100,7 @@ void carregarMemoriaDados(){
     while (fgets(linha, 9, f)) { 
         if(linha[0] == '\n') continue;
 
-        char *pos; // Ponteiro para a posição do caractere de nova linha
+        char *pos; // Ponteiro para a posicao do caractere de nova linha
         if ((pos = strchr(linha, '\n')) != NULL) {
             *pos = '\0'; 
         }
@@ -114,14 +115,14 @@ void carregarMemoriaDados(){
 
 void ImprimirMemoria(){
     printf("teste\n");
-        for(int i=0;i<10;i++){
+        for(int i=0;i<256;i++){
         printf("%d: %s\n", i, mem_p[i]);
     }
 
 }
 
 void ImprimirMemoriaDados(){
-        for(int i=0;i<6;i++){
+        for(int i=0;i<256;i++){
         printf("%d: %s\n", i, mem_d[i]);
     }
 
@@ -176,11 +177,11 @@ void imprimir_instrucao(Instrucao i) {
 
 int ula(int a, int b, int op) { 
     switch (op) { 
-        case 0: return a & b;  
-        case 1: return a | b;  
-        case 2: return a + b;  
-        case 3: return a - b;  
-        default: printf("Operação não reconhecida: %d\n", op); return 0; 
+        case 0: return a + b;  
+        case 1: return a - b;  
+        case 2: return a & b;  
+        case 3: return a | b;  
+        default: printf("Operacao nao reconhecida: %d\n", op); return 0; 
     } 
 } 
 
@@ -195,19 +196,66 @@ int check_overflow(int result) {
     return 0;
 }
 
+void conv_asm(char *bin_inst, FILE *arquivo_asm, Instrucao inst) {
+    if(inst.rd == 0 && inst.rt == 0 && inst.rs == 0){
+        return;
+    }
+    switch (inst.tipo) {
+        case 1:
+            switch (inst.funct) {
+                case 0:
+                    fprintf(arquivo_asm, "add $r%d, $r%d, $r%d", inst.rd, inst.rs, inst.rt);
+                    break;
+                case 2:
+                    fprintf(arquivo_asm, "sub $r%d, $r%d, $r%d", inst.rd, inst.rs, inst.rt);
+                    break;
+                case 4:
+                    fprintf(arquivo_asm, "and $r%d, $r%d, $r%d", inst.rd, inst.rs, inst.rt);
+                    break;
+                case 5:
+                    fprintf(arquivo_asm, "or $r%d, $r%d, $r%d", inst.rd, inst.rs, inst.rt);
+                    break;
+                default:
+                    fprintf(arquivo_asm, "Funcao R nao reconhecida: %d", inst.funct);
+                    break;
+            }
+            break;
+        case 2:
+            switch (inst.opcode) {
+                case 4:
+                    fprintf(arquivo_asm, "addi $r%d, $r%d, %d", inst.rt, inst.rs, inst.immediate);
+                    break;
+                case 11:
+                    fprintf(arquivo_asm, "lw $r%d, %d($r%d)", inst.rt, inst.immediate, inst.rs);
+                    break;
+                case 15:
+                    fprintf(arquivo_asm, "sw $r%d, %d($r%d)", inst.rt, inst.immediate, inst.rs);
+                    break;
+                case 8:
+                    fprintf(arquivo_asm, "beq $r%d, $r%d, %d", inst.rt, inst.rs, inst.immediate);
+                    break;
+                default:
+                    fprintf(arquivo_asm, "Opcode I nao reconhecido: %d", inst.opcode);
+                    break;
+            }
+            break;
+        case 3:
+            fprintf(arquivo_asm, "j %d", inst.address);
+            break;
+    }
+
+}
+
 void salvar_asm() {
-    FILE *arquivo_asm = fopen("programa.asm", "w");
+    FILE *arquivo_asm = fopen("programa.asm", "w"); 
     if (arquivo_asm == NULL) {
         printf("Erro ao criar o arquivo\n");
         return;
     }
     for (int i = 0; i < 256; i++) {
-        if (strlen(mem_p[i]) > 0) {
-            Instrucao instr = decod(mem_p[i]);
-            fprintf(arquivo_asm, "INSTRUÇÃO %d: tipo %c, opcode %d\n", i, instr.tipo, instr.opcode);
-        }
+        conv_asm(mem_p[i], arquivo_asm, decod(mem_p[i]));
+        fprintf(arquivo_asm, "\n");
     }
-
     fclose(arquivo_asm);
     printf("Arquivo .asm salvo com sucesso!\n");
 }
@@ -220,7 +268,7 @@ void salvar_data() {
     }
 
     for (int i = 0; i < 256; i++) {
-        fprintf(arquivo_memoria, "Endereço de memoria[%d]: %s\n", i, mem_d[i]);
+        fprintf(arquivo_memoria, "Endereco de memoria[%d]: %s\n", i, mem_d[i]);
     }
 
     fclose(arquivo_memoria);
@@ -231,38 +279,51 @@ void salvar_data() {
 void executar_instrucao(char* bin_instr, BancoRegistradores *BR) {
     salvar_estado(pc, *BR);
     Instrucao inst = decod(bin_instr);
+    int pulou = 0;
+
+    printf("inst: %s\n", bin_instr);
+    printf("opcode: %d\n", inst.opcode);
+    printf("tipo: %d\n", inst.tipo);
+    printf("rs: %d\n", inst.rs);
+    printf("rt: %d\n", inst.rt);
+    printf("im: %d\n", inst.immediate);
     
     switch(inst.tipo) {
-        int pulou = 0;
         case 1: // R
             if (inst.funct == 0) { // and
-                BR->reg[inst.rd] = BR->reg[inst.rs] & BR->reg[inst.rt];
+                BR->reg[inst.rd] = ula(BR->reg[inst.rs], BR->reg[inst.rt], 0);
             } else if (inst.funct == 1) { // or
-                BR->reg[inst.rd] = BR->reg[inst.rs] | BR->reg[inst.rt];
+                BR->reg[inst.rd] = ula(BR->reg[inst.rs], BR->reg[inst.rt], 1);
             } else if (inst.funct == 2) { // add
-                BR->reg[inst.rd] = BR->reg[inst.rs] + BR->reg[inst.rt];
+                BR->reg[inst.rd] = ula(BR->reg[inst.rs], BR->reg[inst.rt], 2);
             } else if (inst.funct == 3) { // sub
-                BR->reg[inst.rd] = BR->reg[inst.rs] - BR->reg[inst.rt];
+                BR->reg[inst.rd] = ula(BR->reg[inst.rs], BR->reg[inst.rt], 4);
             }
             break;
         
         case 2: // I
-            if (inst.opcode == 4) { // beq
-                if (BR->reg[inst.rs] == BR->reg[inst.rt])
-                    pc += inst.immediate;
-            } else if (inst.opcode == 5) { // lw
-                BR->reg[inst.rt] = strtol(mem_d[BR->reg[inst.rs] + inst.immediate], NULL, 2);
-            } else if (inst.opcode == 6) { // sw
+            if (inst.opcode == 8) { // beq
+                if (BR->reg[inst.rs] == BR->reg[inst.rt]){
+                    pc += (inst.immediate*2);
+                    pulou = 1;
+                }
+            } else if (inst.opcode == 11) { // lw
+                BR->reg[inst.rt] = strtol(mem_d[BR->reg[inst.rs] + inst.immediate], NULL, 10);
+            } else if (inst.opcode == 15) { // sw
                 int val = BR->reg[inst.rt];
-                sprintf(mem_d[BR->reg[inst.rs] + inst.immediate], "%08d", val);
+                sprintf(mem_d[(BR->reg[inst.rs] + inst.immediate)], "%08d", val);
+            } else if(inst.opcode == 4){
+                BR->reg[inst.rt] = ula(BR->reg[inst.rs], inst.immediate, 0);
             }
             break;
 
         case 3: // J
-            pc = inst.address - 1; // -1 pq o pc++ vem depois
+            pc = (inst.address*2); 
+            pulou = 1;
             break;
-    }
-    if (!pulou) pc++
+        }
+
+        if (pulou != 1) pc++;
 }
 
 // voltar uma
@@ -271,7 +332,6 @@ int main(){
     int c= 0;
 
     BancoRegistradores BR = {0};
-
 
     while(c == 0){
     
@@ -289,11 +349,11 @@ int main(){
     printf("10. Executa uma instrucao (Step)\n"); 
     printf("11. Volta uma instrucao (Back)\n"); 
     printf("0. Sair \n"); 
-    printf("Escolha uma opção: "); 
+    printf("Escolha uma opcao: "); 
     setbuf(stdin, NULL);
     scanf("%d", &m);
     switch(m){
-        case 1: //Carregar memória de instruções (.mem) 
+        case 1: //Carregar memória de instrucões (.mem) 
             carregarMemoria();
             decod(mem_p[0]);
             break;
@@ -302,7 +362,7 @@ int main(){
             carregarMemoriaDados();
             break;
             
-        case 3: //Imprimir memórias instruções
+        case 3: //Imprimir memórias instrucões
             ImprimirMemoria();
             break;
 
@@ -311,13 +371,13 @@ int main(){
             break;
 
         case 5: //  Imprimir banco de registradores
-            unidadedeSaida(*BR);
+            unidadedeSaida(&BR);
             break;
         
         case 6:// Imprimir todo o simulador (registradores e memórias)
             ImprimirMemoria();
             ImprimirMemoriaDados();
-            unidadedeSaida(*BR);
+            unidadedeSaida(&BR);
 
             break;
         
@@ -330,24 +390,22 @@ int main(){
             break;
 
         case 9: //executar oprograma
-           while (strlen(mem_p[pc]) > 0) {
-           printf("\nExecutando instrução no PC = %d: %s\n", pc, mem_p[pc]);
-           executar_instrucao(mem_p[pc], &BR);
+        while (pc < 256) {
+            printf("\nExecutando instrução no PC = %d: %s\n", pc, mem_p[pc]);
+            executar_instrucao(mem_p[pc], &BR);
     }
     printf("Fim do programa.\n");
             break;
         
-        case 10: // executar 1 instrução
-            if (strlen(mem_p[pc]) > 0) {
-            executar_instrucao(mem_p[pc], &BR);
-            } else {
-            printf("Nenhuma instrução para executar.\n");
-            }      
+        case 10: // executar 1 instrucao
+              while(strcmp(mem_p[pc], "\n") != 0){
+                executar_instrucao(mem_p[pc], &BR);
+              }
             break;
 
         case 11: // voltar uma inst
             if (restaurar_estado(&pc, &BR)) {
-            printf("Instrução anterior restaurada. PC = %d\n", pc);
+            printf("Instrucao anterior restaurada. PC = %d\n", pc);
     }
             break;
 
@@ -355,7 +413,7 @@ int main(){
             printf("Programa finalizado!");
             break;
         default:
-            printf("Opção invalida, por favor digite novamente.\n");
+            printf("Opcao invalida, por favor digite novamente.\n");
            
 
     }
