@@ -6,6 +6,10 @@
 
 //voids que serão reaproveitados
 
+char mem_p[256][17];
+char mem_d[256][9];
+int pc = 0;
+
 Instrucao decod(char* inst) {
     Instrucao i;
     char buffer[17];
