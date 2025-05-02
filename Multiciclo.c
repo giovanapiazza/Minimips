@@ -3,12 +3,33 @@
 #include <stdint.h>
 #include <stdio.h>
 
+//novos
+void executarCicloInstrucaoMatriz(char mem_d[256][9]) {
+    static int estado = 0;
+    static char instrucao[17];
+    static int linha_atual = 0;
 
-//voids que serão reaproveitados
+    if (estado == 0) { // Busca
+        for (int i = 0; i < 17; i++) {
+            instrucao[i] = mem_p[linha_atual][i];
+        }
+        printf("Buscou instrucao da linha %d\n", linha_atual);
+        estado = 1;
+    }
+    else (estado == 1) { // Execução
+        printf("Executando instrucao: %d %d %d %d\n",
+               instrucao[0], instrucao[1], instrucao[2], instrucao[3]);
+        // Adicionar depois para execução da instrução
 
+        estado = 0;
+        linha_atual++; // Próxima linha da memória
+    }
+}
+
+
+//Reaproveitados
 char mem_p[256][17];
 char mem_d[256][9];
-int pc = 0;
 
 Instrucao decod(char* inst) {
     Instrucao i;
