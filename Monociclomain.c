@@ -47,13 +47,6 @@ int restaurar_estado(int *pc, BancoRegistradores *BR) {
     return 1;
 }
 
-void unidadedeSaida(BancoRegistradores *BR) {
-    printf("Conteudo do banco de registradores:\n");
-    for (int i = 0; i < 8; i++) {
-        printf("R%d: %d\n", i, BR->reg[i]);
-    }
-}
-
 void carregarMemoria() {
     char arquivo[50];
     printf("Digite o nome do arquivo que deseja abrir: ");
@@ -81,7 +74,6 @@ void carregarMemoria() {
     fclose(f);
     printf("Memoria de programa carregada com sucesso\n");
 }
-
 
 void carregarMemoriaDados(){
     char arquivo[50];
@@ -116,7 +108,12 @@ void ImprimirMemoriaDados(){
     }
 }
 
-
+void unidadedeSaida(BancoRegistradores *BR) {
+    printf("Conteudo do banco de registradores:\n");
+    for (int i = 0; i < 8; i++) {
+        printf("R%d: %d\n", i, BR->reg[i]);
+    }
+}
 
 Instrucao decod(char* inst) {
     Instrucao i;
@@ -158,32 +155,6 @@ Instrucao decod(char* inst) {
     }
 
     return i;
-}
-
-
-int ula(int a, int b, int op) {
-    switch (op) {
-        case 0: //add
-            return a + b;
-        case 1: //sub
-            return a - b;
-        case 2: //and
-            return a & b;
-        case 3: //or
-            return a | b;
-        default:
-            printf("Operacao invalida.\n"); 
-            return 0;
-    }
-}
-
-
-int mux(int a, int b, int select) {
-    if (select == 0) {
-        return a;
-    } else {
-        return b;
-    }
 }
 
 void conv_asm(FILE* arquivo_asm, Instrucao inst){
@@ -234,6 +205,30 @@ void conv_asm(FILE* arquivo_asm, Instrucao inst){
             break;
     }
 
+}
+
+int ula(int a, int b, int op) {
+    switch (op) {
+        case 0: //add
+            return a + b;
+        case 1: //sub
+            return a - b;
+        case 2: //and
+            return a & b;
+        case 3: //or
+            return a | b;
+        default:
+            printf("Operacao invalida.\n"); 
+            return 0;
+    }
+}
+
+int mux(int a, int b, int select) {
+    if (select == 0) {
+        return a;
+    } else {
+        return b;
+    }
 }
 
 void imprimirMemoria(char mem_p[256][17]) {
