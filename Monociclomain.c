@@ -116,12 +116,7 @@ void ImprimirMemoriaDados(){
     }
 }
 
-void imprimirRegistradores(BancoRegistradores *BR) {
-    const char *nomes[] = {"$zero", "$v0", "$a0", "$t0", "$t1", "$s0", "$s1", "$ra"};
-    for (int i = 0; i < 8; i++) {
-        printf("Registrador %s: %d\n", nomes[i], BR->reg[i]);
-    }
-}
+
 
 Instrucao decod(char* inst) {
     Instrucao i;
