@@ -50,7 +50,7 @@ int restaurar_estado(int *pc, BancoRegistradores *BR) {
 void unidadedeSaida(BancoRegistradores *BR) {
     printf("Conteudo do banco de registradores:\n");
     for (int i = 0; i < 8; i++) {
-        printf("R%d: %d\n", i, banco_registradores->registradores[i]);
+        printf("R%d: %d\n", i, BR->reg[i]);
     }
 }
 
@@ -164,11 +164,20 @@ Instrucao decod(char* inst) {
 
     return i;
 }
+void conv_asm(FILE* arquivo_asm, Instrucao inst);
 
-void imprimir_instrucao(Instrucao i) {
-    printf("Tipo: %d | Opcode: %d | RS: %d | RT: %d | RD: %d | Funct: %d | Immediate: %d | Address: %d\n",
-        i.tipo, i.opcode, i.rs, i.rt, i.rd, i.funct, i.immediate, i.address);
+void imprimirMemoria(char mem_p[256][17]) {
+    printf("Conteudo da memoria:\n");
+    for (int i = 0; i < 8; i++) {
+        printf("Endereco %d: %s\n", i, mem_p[i]);
+        Instrucao inst = decod(mem_p[i]);
+
+        conv_asm(stdout, inst);
+
+        printf("\n\n");
+    }
 }
+
 
 int ula(int a, int b, int op) {
     switch (op) {
@@ -195,7 +204,7 @@ int mux(int a, int b, int select) {
     }
 }
 
-void conv_asm(char *bin_inst, FILE *arquivo_asm, Instrucao inst) {
+void conv_asm(FILE* arquivo_asm, Instrucao inst){
     if(inst.rd == 0 && inst.rt == 0 && inst.rs == 0){
         return;
     }
@@ -252,7 +261,7 @@ void salvar_asm() {
         return;
     }
     for (int i = 0; i < 256; i++) {
-        conv_asm(mem_p[i], arquivo_asm, decod(mem_p[i]));
+        conv_asm(arquivo_asm, decod(mem_p[i]));
         fprintf(arquivo_asm, "\n");
     }
     fclose(arquivo_asm);
@@ -347,14 +356,15 @@ int main() {
         scanf("%d", &m);
         
         switch(m){
-            case 1: carregar memroia
+            case 1: //carregar memroia
                 carregarMemoria();
                 break;
-            case 2: /carregar memoria de dados
+            case 2: //carregar memoria de dados
                 carregarMemoriaDados();
                 break;
             case 3: //imprimir memoria
-                ImprimirMemoria(); 
+
+                imprimirMemoria(mem_p);
                 break;
             case 4: //imprimir memoria de dados
                 ImprimirMemoriaDados(); 
@@ -363,7 +373,7 @@ int main() {
                 unidadedeSaida(&BR); 
                 break;
             case 6: // imprimir tudo
-                ImprimirMemoria(); 
+                imprimirMemoria(mem_p);
                 ImprimirMemoriaDados();
                 unidadedeSaida(&BR);
                 break;
@@ -378,10 +388,12 @@ int main() {
                     executar_instrucao(mem_p[pc], &BR);
                 }
                 break;
-            case 10: //step
-                if (strlen(mem_p[pc]) > 0)
-                    executar_instrucao(mem_p[pc], &BR);
-                break;
+            case 10: // step
+            if (strlen(mem_p[pc]) > 0) {
+                executar_instrucao(mem_p[pc], &BR);  // Executa uma instrução
+                printf("Executando instrução no PC = %d\n", pc);
+            }
+            break;
             case 11: //back
                 if (restaurar_estado(&pc, &BR)){
                     printf("Instrucao anterior restaurada. PC = %d\n", pc);
