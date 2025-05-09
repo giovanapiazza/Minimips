@@ -164,19 +164,6 @@ Instrucao decod(char* inst) {
 
     return i;
 }
-void conv_asm(FILE* arquivo_asm, Instrucao inst);
-
-void imprimirMemoria(char mem_p[256][17]) {
-    printf("Conteudo da memoria:\n");
-    for (int i = 0; i < 8; i++) {
-        printf("Endereco %d: %s\n", i, mem_p[i]);
-        Instrucao inst = decod(mem_p[i]);
-
-        conv_asm(stdout, inst);
-
-        printf("\n\n");
-    }
-}
 
 
 int ula(int a, int b, int op) {
@@ -252,6 +239,18 @@ void conv_asm(FILE* arquivo_asm, Instrucao inst){
             break;
     }
 
+}
+
+void imprimirMemoria(char mem_p[256][17]) {
+    printf("Conteudo da memoria:\n");
+    for (int i = 0; i < 8; i++) {
+        printf("Endereco %d: %s\n", i, mem_p[i]);
+        Instrucao inst = decod(mem_p[i]);
+
+        conv_asm(stdout, inst);
+
+        printf("\n\n");
+    }
 }
 
 void salvar_asm() {
